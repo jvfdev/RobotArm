@@ -28,9 +28,9 @@ class RobotGUI(QWidget):
         self.lbl_dec.setAlignment(Qt.AlignCenter)
 
         self.lbl_j0 = QLabel('J0')
-        self.le_0 = QLineEdit()
-        self.le_0.setMaxLength(5)
-        self.le_0.setValidator(self.onlyint)
+        self.le_j0 = QLineEdit()
+        self.le_j0.setMaxLength(5)
+        # self.le_j0.setValidator(self.onlyint)
         self.btn_j0i = QPushButton("Increase")
         self.btn_j0d = QPushButton("Decrease")
 
@@ -62,6 +62,9 @@ class RobotGUI(QWidget):
         self.btn_j4i = QPushButton("Increase")
         self.btn_j4d = QPushButton("Decrease")
 
+        self.le_fb = QLineEdit()
+        self.btn_snd = QPushButton('Send to Bot')
+
         self.init_ui()
 
 
@@ -76,7 +79,7 @@ class RobotGUI(QWidget):
         grid.addWidget(self.lbl_dec, 0, 3)
 
         grid.addWidget(self.lbl_j0, 1, 0)
-        grid.addWidget(self.le_0, 1, 1)
+        grid.addWidget(self.le_j0, 1, 1)
         grid.addWidget(self.btn_j0i, 1, 2)
         grid.addWidget(self.btn_j0d, 1, 3)
 
@@ -100,6 +103,17 @@ class RobotGUI(QWidget):
         grid.addWidget(self.btn_j4i, 5, 2)
         grid.addWidget(self.btn_j4d, 5, 3)
 
+        grid.addWidget(self.le_fb,1,4)
+
+        grid.addWidget(self.btn_snd,6,2,1,2)
+        # grid.setSpacing(10)
+
+
+        self.le_j0.textChanged.connect(self.txtchgj0)
+
+
+
+
         # row0 = QHBoxLayout()
         # row0.addWidget(self.lbl_jnt)
         # row0.addWidget(self.lbl_ang)
@@ -107,7 +121,7 @@ class RobotGUI(QWidget):
         # row0.addWidget(self.lbl_dec)
         #
         #
-        # row1 = QHBoxLayout()
+        # row1 = QHBoxLayout()()
         # row1.addWidget(self.lbl_j0)
         # row1.addWidget(self.le)
         # row1.addWidget(self.btn_j0i)
@@ -122,6 +136,12 @@ class RobotGUI(QWidget):
         self.center()
         self.setWindowTitle('Robot Arm Control')
         self.show()
+
+    def txtchgj0(self):
+        # val = self.le_j0.text()
+        self.le_fb.setText(self.le_j0.text())
+        # print(val)
+        # print(type(val))
 
 
     def center(self):
