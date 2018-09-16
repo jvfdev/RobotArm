@@ -13,11 +13,12 @@ from PyQt5.QtCore import *
 ser = serial.Serial('COM3', 9600)
 
 
-def deg2us(deg, t1, t2):
-    [deg,t1,t2] = [float(i) for i in [deg, t1, t2]]
-    us = round(deg * ((t2 - t1) / 90.0) + t1)
+def deg2us(deg, m, b):
+    [deg, m, b] = [float(i) for i in [deg, m, b]]
+    us = round(deg * m + b)
     # print(us)
     return us
+
 
 class RobotGUI(QWidget):
 
@@ -29,66 +30,36 @@ class RobotGUI(QWidget):
         self.lbl_jnt = QLabel('Joint')
         self.lbl_jnt.setAlignment(Qt.AlignCenter)
         self.lbl_ang = QLabel('Angle (deg)')
-        # self.lbl_ang.setText('test')
-
-        # self.lbl_ang = QLabel('Angle (degrees)')
         self.lbl_ang.setAlignment(Qt.AlignCenter)
-        # self.lbl_inc = QLabel('Increase')
-        # self.lbl_inc.setAlignment(Qt.AlignCenter)
-        # self.lbl_dec = QLabel('Decrease')
-        # self.lbl_dec.setAlignment(Qt.AlignCenter)
 
         self.lbl_j0 = QLabel('J0')
         self.sb_j0 = QDoubleSpinBox()
         self.sb_j0.setRange(5, 175)
         self.sb_j0.setValue(90.0)
-        # self.le_j0 = QLineEdit()
-        # self.le_j0.setMaxLength(5)
-        # self.le_j0.setValidator(self.onlynum)
-        # self.btn_j0i = QPushButton("+")
-        # self.btn_j0d = QPushButton("-")
 
         self.lbl_j1 = QLabel('J1')
         self.sb_j1 = QDoubleSpinBox()
         self.sb_j1.setRange(0, 180)
-        self.sb_j1.setValue(135.0)
-        # self.le_j1 = QLineEdit()
-        # self.le_j1.setMaxLength(5)
-        # self.le_j1.setValidator(self.onlynum)
-        # self.btn_j1i = QPushButton("+")
-        # self.btn_j1d = QPushButton("-")
+        self.sb_j1.setValue(60.0)
 
         self.lbl_j2 = QLabel('J2')
         self.sb_j2 = QDoubleSpinBox()
-        self.sb_j2.setRange(60, 180)
-        self.sb_j2.setValue(60.0)
-        # self.le_j2 = QLineEdit()
-        # self.le_j2.setMaxLength(5)
-        # self.le_j2.setValidator(self.onlynum)
-        # self.btn_j2i = QPushButton("+")
-        # self.btn_j2d = QPushButton("-")
+        self.sb_j2.setRange(25, 180)
+        self.sb_j2.setValue(25.0)
 
         self.lbl_j3 = QLabel('J3')
         self.sb_j3 = QDoubleSpinBox()
-        self.sb_j3.setRange(0, 180)
-        self.sb_j3.setValue(150.0)
-
+        self.sb_j3.setRange(80, 250)
+        self.sb_j3.setValue(110.0)
 
         self.lbl_j4 = QLabel('J4')
         self.sb_j4 = QDoubleSpinBox()
-        self.sb_j4.setRange(0, 180)
-        self.sb_j4.setValue(160.0)
+        self.sb_j4.setRange(0, 250)
+        self.sb_j4.setValue(10.0)
 
-        self.le_fb = QLineEdit()
         self.btn_snd = QPushButton('Send to Bot')
 
-        # self.test = QDoubleSpinBox()
-        # self.test.setRange(10,20)
-        # self.test.setValue(15.0)
-        # self.test.setDecimals(1)
-
         self.init_ui()
-
 
     def init_ui(self):
 
@@ -97,94 +68,63 @@ class RobotGUI(QWidget):
         positions = [(i, j) for i in range(5) for j in range(4)]
         grid.addWidget(self.lbl_jnt, 0, 0)
         grid.addWidget(self.lbl_ang, 0, 1)
-        # grid.addWidget(self.lbl_inc, 0, 2)
-        # grid.addWidget(self.lbl_dec, 0, 3)
-        #
+
         grid.addWidget(self.lbl_j0, 1, 0)
         grid.addWidget(self.sb_j0, 1, 1)
-        # grid.addWidget(self.btn_j0i, 1, 2)
-        # grid.addWidget(self.btn_j0d, 1, 3)
-        #
+
         grid.addWidget(self.lbl_j1, 2, 0)
         grid.addWidget(self.sb_j1, 2, 1)
-        # grid.addWidget(self.btn_j1i, 2, 2)
-        # grid.addWidget(self.btn_j1d, 2, 3)
-        #
+
         grid.addWidget(self.lbl_j2, 3, 0)
         grid.addWidget(self.sb_j2, 3, 1)
-        # grid.addWidget(self.btn_j2i, 3, 2)
-        # grid.addWidget(self.btn_j2d, 3, 3)
-        #
+
         grid.addWidget(self.lbl_j3, 4, 0)
         grid.addWidget(self.sb_j3, 4, 1)
-        # grid.addWidget(self.btn_j3i, 4, 2)
-        # grid.addWidget(self.btn_j3d, 4, 3)
-        #
+
         grid.addWidget(self.lbl_j4, 5, 0)
         grid.addWidget(self.sb_j4, 5, 1)
-        # grid.addWidget(self.btn_j4i, 5, 2)
-        # grid.addWidget(self.btn_j4d, 5, 3)
-        #
-        # grid.addWidget(self.le_fb,1,4)
-        #
+
         grid.addWidget(self.btn_snd,6,0,1,2)
         grid.addWidget(self.chk,0,2)
-        # grid.addWidget(self.test,2,4)
-        # grid.setSpacing(10)
-
-
-        # self.le_j0.textChanged.connect(self.txtchgj0)
 
         self.btn_snd.clicked.connect(self.send_serial)
         self.chk.stateChanged.connect(self.write_us)
-        # self.test.valueChanged.connect(self.send_serial)
 
-
-        # row0 = QHBoxLayout()
-        # row0.addWidget(self.lbl_jnt)
-        # row0.addWidget(self.lbl_ang)
-        # row0.addWidget(self.lbl_inc)
-        # row0.addWidget(self.lbl_dec)
-        #
-        #
-        # row1 = QHBoxLayout()()
-        # row1.addWidget(self.lbl_j0)
-        # row1.addWidget(self.le)
-        # row1.addWidget(self.btn_j0i)
-        # row1.addWidget(self.btn_j0d)
-        #
-        # v_box = QVBoxLayout()
-        # v_box.addLayout(row0)
-        # v_box.addLayout(row1)
-
-        # self.setLayout(v_box)
-        # self.resize(1280,720)
         self.center()
         self.setWindowTitle('Robot Arm Control')
         self.show()
 
     def send_serial(self):
-        us_j0 = deg2us(self.sb_j0.value(), 625, 1475)
-        us_j1 = deg2us(self.sb_j1.value(), 2400, 1475)
-        us_j2 = deg2us(self.sb_j2.value(), 2600, 1700)
-        us_j3 = deg2us(self.sb_j3.value(), 625, 1475)
-        us_j4 = deg2us(self.sb_j4.value(), 625, 1475)
-        cmd = str(us_j0) + 'a,' + str(us_j1) + 'b,' + str(us_j2) + 'c,' + str(us_j3) + 'd,' + str(us_j4) + 'e,'
-        print(cmd)
-        ser.write(cmd.encode('utf-8'))
-        # a = self.test.value()
-        # print(a)
+        if self.chk.isChecked():
+            cmd = str(round(self.sb_j0.value())) + 'a,' + str(round(self.sb_j1.value())) + 'b,' + str(round(self.sb_j2.value())) + 'c,' + str(round(self.sb_j3.value())) + 'd,' + str(round(self.sb_j4.value())) + 'e,'
+            # print(cmd)
+            ser.write(cmd.encode('utf-8'))
+        else:
+            us_j0 = deg2us(self.sb_j0.value(), 9.4444, 625)
+            us_j1 = deg2us(self.sb_j1.value(), -9.7222, 2325)
+            us_j2 = deg2us(self.sb_j2.value(), -8.0556, 2250)
+            us_j3 = deg2us(self.sb_j3.value(), 10.2778, -150)
+            us_j4 = deg2us(self.sb_j4.value(), 5.0000, 1050)
+            cmd = str(us_j0) + 'a,' + str(us_j1) + 'b,' + str(us_j2) + 'c,' + str(us_j3) + 'd,' + str(us_j4) + 'e,'
+            ser.write(cmd.encode('utf-8'))
+
+
 
     def write_us(self):
         self.lbl_ang.setText('Angle (µs) ') if self.chk.isChecked() else self.lbl_ang.setText('Angle (deg)')
+        self.sb_j0.setRange(500, 2500) if self.chk.isChecked() else self.sb_j0.setRange(5, 175)
+        self.sb_j1.setRange(500, 2500) if self.chk.isChecked() else self.sb_j1.setRange(0, 180)
+        self.sb_j2.setRange(500, 2500) if self.chk.isChecked() else self.sb_j2.setRange(25, 180)
+        self.sb_j3.setRange(500, 2500) if self.chk.isChecked() else self.sb_j3.setRange(80, 250)
+        self.sb_j4.setRange(500, 2500) if self.chk.isChecked() else self.sb_j4.setRange(0, 250)
 
-    def txtchgj0(self):
-        pass
-        # self.le_fb.setText(self.le_j0.text())
-        # a = float(self.le_j0.text())
+        self.sb_j0.setValue(1475) if self.chk.isChecked() else self.sb_j0.setValue(90)
+        self.sb_j1.setValue(1742) if self.chk.isChecked() else self.sb_j1.setValue(60)
+        self.sb_j2.setValue(2049) if self.chk.isChecked() else self.sb_j2.setValue(25)
+        self.sb_j3.setValue(981) if self.chk.isChecked() else self.sb_j3.setValue(110)
+        self.sb_j4.setValue(1100) if self.chk.isChecked() else self.sb_j4.setValue(10)
 
     def center(self):
-
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
