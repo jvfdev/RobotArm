@@ -1,7 +1,9 @@
 """
 Robot arm GUI
-Version 0.10 - development
-sends individual motor commands to Robot. Input is degrees, sends microsecond delay to Arduino Uno
+Version 1.0 - Initial Release
+Sends command for each joint of robot arm.
+Input is degrees, sends microsecond delay to Arduino Uno
+Also has the option to write the delay in us directly, mostly used for development and calibration.
 """
 import sys
 # from PyQt5.QtWidgets import QWidget, QApplication, QDesktopWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QGridLayout
