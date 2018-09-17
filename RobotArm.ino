@@ -1,7 +1,10 @@
-String str;
+/* Arduino Robot Arm Code
+ * Designed for RobotArmGUI Version 1.0 
+ */
 
 #include <Servo.h>
 
+String str;
 Servo J0, J1, J2, J3, J4;
 
 void setup() {
