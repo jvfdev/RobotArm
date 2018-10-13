@@ -18,7 +18,6 @@ ser = serial.Serial('COM3', 9600)
 def deg2us(deg, m, b):
     [deg, m, b] = [float(i) for i in [deg, m, b]]
     us = round(deg * m + b)
-    # print(us)
     return us
 
 
@@ -99,7 +98,6 @@ class RobotGUI(QWidget):
     def send_serial(self):
         if self.chk.isChecked():
             cmd = str(round(self.sb_j0.value())) + 'a,' + str(round(self.sb_j1.value())) + 'b,' + str(round(self.sb_j2.value())) + 'c,' + str(round(self.sb_j3.value())) + 'd,' + str(round(self.sb_j4.value())) + 'e,;'
-            print(cmd)
             ser.write(cmd.encode('utf-8'))
         else:
             us_j0 = deg2us(self.sb_j0.value(), 9.4444, 625)
@@ -108,7 +106,6 @@ class RobotGUI(QWidget):
             us_j3 = deg2us(self.sb_j3.value(), 10.2778, -150)
             us_j4 = deg2us(self.sb_j4.value(), 5.0000, 1050)
             cmd = str(us_j0) + 'a,' + str(us_j1) + 'b,' + str(us_j2) + 'c,' + str(us_j3) + 'd,' + str(us_j4) + 'e,;'
-            print(cmd)
             ser.write(cmd.encode('utf-8'))
 
 
