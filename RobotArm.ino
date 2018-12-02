@@ -67,7 +67,7 @@ void loop() {
 
 
 void moveArm(float x_new[5], float x_old[5]) {
-  float v = 15.0; // approximate end effector velocity, mm/s
+  float v = 30.0; // approximate end effector velocity, mm/s
 
   //total distance to travel (technically not the true distance, but accounts for all joints)
   float D = sqrt( sq(x_new[0] - x_old[0]) + sq(x_new[1] - x_old[1]) + sq(x_new[2] - x_old[2]) + sq(x_new[3] - x_old[3]) + sq(x_new[4] - x_old[4])  );
