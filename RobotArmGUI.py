@@ -1,16 +1,16 @@
 """
 Robot arm GUI
-Version 1.0 - Initial Release
-Sends command for each joint of robot arm.
-Input is degrees, sends microsecond delay to Arduino Uno
-Also has the option to write the delay in us directly, mostly used for development and calibration.
+Version 1.1 - Now uses R, Z, Phi, Theta to determine end effector position.
+Calculates necessary robot arm joint angles
 """
-import sys
-# from PyQt5.QtWidgets import QWidget, QApplication, QDesktopWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QGridLayout
 import serial
+import sys
+import win32api
+
+from PyQt5.QtCore import *
+# from PyQt5.QtWidgets import QWidget, QApplication, QDesktopWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QGridLayout
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
 
 ser = serial.Serial('COM3', 9600)
 
@@ -25,6 +25,11 @@ class RobotGUI(QWidget):
 
     def __init__(self):
         super(RobotGUI, self).__init__()
+
+        self.width = 545
+        self.height = 200
+        self.left = win32api.GetSystemMetrics(0) / 2 - self.width / 2
+        self.top = win32api.GetSystemMetrics(1) / 2 - self.height / 2
 
         # self.chk = QCheckBox('Write µs')
 
@@ -63,11 +68,14 @@ class RobotGUI(QWidget):
         self.sb_grip.setValue(10.0)
         self.lbl_grip_unit = QLabel('(%)')
 
-        self.btn_snd = QPushButton('Send to Bot')
+        self.btn_snd = QPushButton('Go to current position')
 
         self.init_ui()
 
     def init_ui(self):
+        self.setGeometry(self.left, self.top, self.width, self.height)
+
+        self.createTable()
 
         grid = QGridLayout()
         self.setLayout(grid)
@@ -96,19 +104,21 @@ class RobotGUI(QWidget):
         grid.addWidget(self.lbl_grip_unit, 5, 2)
 
         grid.addWidget(self.btn_snd,6,0,1,3)
+
+        grid.addWidget(self.tableWidget,0,3,7,1)
         # grid.addWidget(self.chk,0,2)
 
         self.btn_snd.clicked.connect(self.send_serial)
         # self.chk.stateChanged.connect(self.write_us)
 
-        self.center()
+        # self.center()
         self.setWindowTitle('Robot Arm Control')
         self.show()
 
     def send_serial(self):
-        print("Send Serial Clicked")
+        # print("Send Serial Clicked")
         cmd = str(round(self.sb_R.value())) + 'R,' + str(round(self.sb_Z.value())) + 'Z,' + str(round(self.sb_phi.value())) + 'P,' + str(round(self.sb_theta.value())) + 'T,' + str(round(self.sb_grip.value())) + 'G,;'
-        print(cmd)
+        # print(cmd)
         ser.write(cmd.encode('utf-8'))
 
 
@@ -127,12 +137,20 @@ class RobotGUI(QWidget):
     #     self.sb_theta.setValue(981) if self.chk.isChecked() else self.sb_theta.setValue(110)
     #     self.sb_grip.setValue(1100) if self.chk.isChecked() else self.sb_grip.setValue(10)
 
-    def center(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
+    # def center(self):
+    #     qr = self.frameGeometry()
+    #     cp = QDesktopWidget().availableGeometry().center()
+    #     qr.moveCenter(cp)
+    #     self.move(qr.topLeft())
 
+    def createTable(self):
+        self.tableWidget = QTableWidget()
+        self.tableWidget.setRowCount(1)
+        self.tableWidget.setColumnCount(6)
+        self.tableWidget.setHorizontalHeaderLabels(['CMD','R', 'Z', 'Phi', 'Theta', 'Grip'])
+        # self.tableWidget.setColumnWidth([0,1], [10, 10])
+        for i in range(self.tableWidget.columnCount()):
+            self.tableWidget.setColumnWidth(i, 60)
 
 if __name__ == '__main__':
 
