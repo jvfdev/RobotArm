@@ -69,6 +69,8 @@ class RobotGUI(QWidget):
         self.lbl_grip_unit = QLabel('(%)')
 
         self.btn_snd = QPushButton('Go to current position')
+        self.rcd_btn = QPushButton('Record current position')
+
 
         self.init_ui()
 
@@ -79,9 +81,9 @@ class RobotGUI(QWidget):
 
         grid = QGridLayout()
         self.setLayout(grid)
-        positions = [(i, j) for i in range(5) for j in range(4)]
+
+        ### Add current parameters UI features
         grid.addWidget(self.lbl_jnt, 0, 0, 1, 3)
-        # grid.addWidget(self.lbl_ang, 0, 1)
 
         grid.addWidget(self.lbl_R, 1, 0)
         grid.addWidget(self.sb_R, 1, 1)
@@ -105,10 +107,17 @@ class RobotGUI(QWidget):
 
         grid.addWidget(self.btn_snd,6,0,1,3)
 
-        grid.addWidget(self.tableWidget,0,3,7,1)
-        # grid.addWidget(self.chk,0,2)
+        ### Table features
+        grid.addWidget(self.tableWidget, 0, 3, 7, 1)
 
+        ### Program manipulation UI features
+
+        grid.addWidget(self.rcd_btn, 7, 0, 1, 3)
+
+
+        ### Button actions
         self.btn_snd.clicked.connect(self.send_serial)
+        self.rcd_btn.clicked.connect(self.record_in_table)
         # self.chk.stateChanged.connect(self.write_us)
 
         # self.center()
@@ -120,6 +129,19 @@ class RobotGUI(QWidget):
         cmd = str(round(self.sb_R.value())) + 'R,' + str(round(self.sb_Z.value())) + 'Z,' + str(round(self.sb_phi.value())) + 'P,' + str(round(self.sb_theta.value())) + 'T,' + str(round(self.sb_grip.value())) + 'G,;'
         # print(cmd)
         ser.write(cmd.encode('utf-8'))
+
+    def record_in_table(self):
+        # print(self.tableWidget.rowCount())
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('GOTO'))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem(self.sb_R.text()))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem(self.sb_Z.text()))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QTableWidgetItem(self.sb_phi.text()))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 4, QTableWidgetItem(self.sb_theta.text()))
+        self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 5, QTableWidgetItem(self.sb_grip.text()))
+        # print(self.sb_R.text())
+        # self.tableWidget.setItem(0, 1, QTableWidgetItem('new'))
+        self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+
 
 
 
