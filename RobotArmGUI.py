@@ -6,10 +6,10 @@ Calculates necessary robot arm joint angles
 import serial
 import sys
 import win32api
+import math
+import time
 
 from PyQt5.QtCore import *
-# from PyQt5.QtWidgets import QWidget, QApplication, QDesktopWidget, QHBoxLayout, QVBoxLayout, QLabel, QPushButton, QGridLayout
-from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 ser = serial.Serial('COM3', 9600)
@@ -33,7 +33,7 @@ class RobotGUI(QWidget):
 
         # self.chk = QCheckBox('Write µs')
 
-        self.lbl_jnt = QLabel('End effector Position')
+        self.lbl_jnt = QLabel('End Effector Position')
         self.lbl_jnt.setAlignment(Qt.AlignCenter)
         self.lbl_ang = QLabel('Angle (deg)')
         self.lbl_ang.setAlignment(Qt.AlignCenter)
@@ -70,19 +70,26 @@ class RobotGUI(QWidget):
 
         self.btn_snd = QPushButton('Go to current position')
         self.rcd_btn = QPushButton('Record current position')
+        self.run_btn = QPushButton('Run')
 
+        # define local variables
+        self.r = 0
+        self.z = 0
+        self.phi = 0
+        self.theta = 0
+        self.grip = 0
 
         self.init_ui()
 
     def init_ui(self):
         self.setGeometry(self.left, self.top, self.width, self.height)
 
-        self.createTable()
+        self.create_table()
 
         grid = QGridLayout()
         self.setLayout(grid)
 
-        ### Add current parameters UI features
+        # Add current parameters UI features
         grid.addWidget(self.lbl_jnt, 0, 0, 1, 3)
 
         grid.addWidget(self.lbl_R, 1, 0)
@@ -105,30 +112,74 @@ class RobotGUI(QWidget):
         grid.addWidget(self.sb_grip, 5, 1)
         grid.addWidget(self.lbl_grip_unit, 5, 2)
 
-        grid.addWidget(self.btn_snd,6,0,1,3)
+        grid.addWidget(self.btn_snd, 6, 0, 1, 3)
 
-        ### Table features
+        # Table features
         grid.addWidget(self.tableWidget, 0, 3, 7, 1)
 
-        ### Program manipulation UI features
-
+        # Program manipulation UI features
         grid.addWidget(self.rcd_btn, 7, 0, 1, 3)
+        grid.addWidget(self.run_btn, 7, 3)
 
-
-        ### Button actions
-        self.btn_snd.clicked.connect(self.send_serial)
+        # Button actions
+        self.btn_snd.clicked.connect(self.manual_send)
         self.rcd_btn.clicked.connect(self.record_in_table)
-        # self.chk.stateChanged.connect(self.write_us)
+        self.run_btn.clicked.connect(self.run_program)
 
-        # self.center()
+        # Window properties
         self.setWindowTitle('Robot Arm Control')
         self.show()
 
+    def manual_send(self):
+        self.r = self.sb_R.value()
+        self.z= self.sb_Z.value()
+        self.phi = self.sb_phi.value()
+        self.theta = self.sb_theta.value()
+        self.grip = self.sb_grip.value()
+        self.send_serial()
+
     def send_serial(self):
         # print("Send Serial Clicked")
-        cmd = str(round(self.sb_R.value())) + 'R,' + str(round(self.sb_Z.value())) + 'Z,' + str(round(self.sb_phi.value())) + 'P,' + str(round(self.sb_theta.value())) + 'T,' + str(round(self.sb_grip.value())) + 'G,;'
-        # print(cmd)
+        # cmd = str(round(self.sb_R.value())) + 'R,'
+        # + str(round(self.sb_Z.value())) + 'Z,' + str(round(self.sb_phi.value())) + 'P,'
+        # + str(round(self.sb_theta.value())) + 'T,' + str(round(self.sb_grip.value())) + 'G,;'
+        cmd = str(round(self.r)) + 'R,' +\
+              str(round(self.z)) + 'Z,' +\
+              str(round(self.phi)) + 'P,' +\
+              str(round(self.theta)) + 'T,' +\
+              str(round(self.grip)) + 'G,;'
+        print(cmd)
         ser.write(cmd.encode('utf-8'))
+
+    def run_program(self):
+        print('Run clicked')
+        for i in range(self.tableWidget.rowCount() - 1):
+            # print(self.tableWidget.item(i,1).text())
+            self.r = float(self.tableWidget.item(i, 1).text())
+            self.z = float(self.tableWidget.item(i, 2).text())
+            self.phi = float(self.tableWidget.item(i, 3).text())
+            self.theta = float(self.tableWidget.item(i, 4).text())
+            self.grip = float(self.tableWidget.item(i, 5).text())
+            if i > 0:
+                d = math.sqrt((self.r - r_old) ** 2 +
+                              (self.z - z_old) ** 2 +
+                              (self.theta - theta_old) ** 2 +
+                              (self.phi - phi_old) ** 2 +
+                              (self.grip - grip_old) ** 2)
+                v = 30.0
+                t = max(1.1 * d/v, 0.5)  # increases wait by 10% to allow robot to keep pace
+                print(t)
+                time.sleep(t)
+            self.send_serial()
+            r_old = self.r
+            z_old = self.z
+            theta_old = self.theta
+            phi_old = self.phi
+            grip_old = self.grip
+
+            # print('R:' + str(self.r) + ' | ')
+
+
 
     def record_in_table(self):
         # print(self.tableWidget.rowCount())
@@ -142,8 +193,7 @@ class RobotGUI(QWidget):
         # self.tableWidget.setItem(0, 1, QTableWidgetItem('new'))
         self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
 
-
-
+    # TODO: Add Run Program Feature
 
     # def write_us(self):
     #     self.lbl_ang.setText('Angle (µs) ') if self.chk.isChecked() else self.lbl_ang.setText('Angle (deg)')
@@ -165,17 +215,17 @@ class RobotGUI(QWidget):
     #     qr.moveCenter(cp)
     #     self.move(qr.topLeft())
 
-    def createTable(self):
+    def create_table(self):
         self.tableWidget = QTableWidget()
         self.tableWidget.setRowCount(1)
         self.tableWidget.setColumnCount(6)
-        self.tableWidget.setHorizontalHeaderLabels(['CMD','R', 'Z', 'Phi', 'Theta', 'Grip'])
+        self.tableWidget.setHorizontalHeaderLabels(['CMD', 'R', 'Z', 'Phi', 'Theta', 'Grip'])
         # self.tableWidget.setColumnWidth([0,1], [10, 10])
         for i in range(self.tableWidget.columnCount()):
             self.tableWidget.setColumnWidth(i, 60)
 
-if __name__ == '__main__':
 
+if __name__ == '__main__':
     app = QApplication(sys.argv)
     rg = RobotGUI()
     sys.exit(app.exec_())
