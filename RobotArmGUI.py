@@ -83,6 +83,9 @@ class RobotGUI(QWidget):
         self.grip = 0
 
         self.wait = 0
+        self.num_loops = 0
+        self.loop_line = 0
+
 
         self.init_ui()
 
@@ -133,15 +136,29 @@ class RobotGUI(QWidget):
         self.rcd_btn.clicked.connect(self.record_in_table)
         self.run_btn.clicked.connect(self.run_program)
         self.pse_btn.clicked.connect(self.add_pause)
+        self.lop_btn.clicked.connect(self.add_loop)
 
         # Window properties
         self.setWindowTitle('Robot Arm Control')
         self.show()
 
+    def add_loop(self):
+        #print("test add loop")
+        loop2, ok_pressed_loop = QInputDialog.getInt(self, "Loop", "What line do you want to loop to?", 1, 1, self.tableWidget.rowCount() - 1, 1)
+        if ok_pressed_loop:
+            n_loops, ok_pressed_num_loops = QInputDialog.getInt(self, "Number of loops", "Enter the number of times you want to loop", 1, 1, 10000, 1)
+            if ok_pressed_num_loops:
+                self.num_loops = n_loops
+                self.loop_line = loop2
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('LOOP'))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem(str(loop2)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem(str(n_loops)))
+                self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+
     def add_pause(self):
-        print("test pause")
-        d, okPressed = QInputDialog.getDouble(self, "Enter wait time", "Enter wait time (s) [Enter 0 for Random]:", 0, 0, 360, 1)
-        if okPressed:
+        #print("test pause")
+        d, ok_pressed_pause = QInputDialog.getDouble(self, "Enter wait time", "Enter wait time (s) [Enter 0 for Random]:", 0, 0, 360, 1)
+        if ok_pressed_pause:
             print(d)
             self.wait = d
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('WAIT'))
@@ -171,7 +188,15 @@ class RobotGUI(QWidget):
 
     def run_program(self):
         print('Run clicked')
-        for i in range(self.tableWidget.rowCount() - 1):
+        #for i in range(self.tableWidget.rowCount() - 1):
+        i = 0
+        temp_loops = self.num_loops # restores this value after execution
+        while i < self.tableWidget.rowCount() - 1:
+
+            #rand_dwell = random.random()
+            # print('test rand: ' + str(rand_dwell))
+            maxloop = self.tableWidget.rowCount() - 1
+            print('i: ' + str(i) + 'of' + str(maxloop))
             #print(self.tableWidget.item(i,0).text())
             if self.tableWidget.item(i,0).text() == "GOTO":
                 self.r = float(self.tableWidget.item(i, 1).text())
@@ -186,8 +211,8 @@ class RobotGUI(QWidget):
                               (self.phi - phi_old) ** 2 +
                               (self.grip - grip_old) ** 2)
                     v = 30.0
-                    t = max(1.1 * d/v, 0.5)  # increases wait by 10% to allow robot to keep pace
-                    print(t)
+                    t = max(1.2 * d/v, 0.5)  # increases wait by 10% to allow robot to keep pace
+                    # print(t)
                     time.sleep(t)
                 self.send_serial()
                 r_old = self.r
@@ -198,10 +223,21 @@ class RobotGUI(QWidget):
 
             if self.tableWidget.item(i,0).text() == "WAIT":
                 print("user has become the waiter")
+                self.wait = float(self.tableWidget.item(i, 1).text())
                 if self.wait == 0:
-                    self.wait = random.random() + 0.25
+                    random.seed()
+                    self.wait = random.random() + 1.0
+                print('sleep: ' + str(self.wait))
                 time.sleep(self.wait)
 
+            if self.tableWidget.item(i,0).text() == "LOOP":
+                print("loopin'")
+                if self.num_loops > 0:
+                    self.num_loops = self.num_loops - 1
+                    i = self.loop_line-2
+
+            i = i+1
+        self.num_loops = temp_loops
             # print('R:' + str(self.r) + ' | ')
 
 
