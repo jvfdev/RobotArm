@@ -8,6 +8,7 @@ import sys
 import win32api
 import math
 import time
+import random
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -71,6 +72,8 @@ class RobotGUI(QWidget):
         self.btn_snd = QPushButton('Go to current position')
         self.rcd_btn = QPushButton('Record current position')
         self.run_btn = QPushButton('Run')
+        self.pse_btn = QPushButton('Add wait')
+        self.lop_btn = QPushButton('Add loop')
 
         # define local variables
         self.r = 0
@@ -78,6 +81,8 @@ class RobotGUI(QWidget):
         self.phi = 0
         self.theta = 0
         self.grip = 0
+
+        self.wait = 0
 
         self.init_ui()
 
@@ -115,20 +120,33 @@ class RobotGUI(QWidget):
         grid.addWidget(self.btn_snd, 6, 0, 1, 3)
 
         # Table features
-        grid.addWidget(self.tableWidget, 0, 3, 7, 1)
+        grid.addWidget(self.tableWidget, 0, 3, 9, 1)
 
         # Program manipulation UI features
         grid.addWidget(self.rcd_btn, 7, 0, 1, 3)
-        grid.addWidget(self.run_btn, 7, 3)
+        grid.addWidget(self.run_btn, 9, 3)
+        grid.addWidget(self.pse_btn,8,0,1,3)
+        grid.addWidget(self.lop_btn, 9, 0, 1, 3)
 
         # Button actions
         self.btn_snd.clicked.connect(self.manual_send)
         self.rcd_btn.clicked.connect(self.record_in_table)
         self.run_btn.clicked.connect(self.run_program)
+        self.pse_btn.clicked.connect(self.add_pause)
 
         # Window properties
         self.setWindowTitle('Robot Arm Control')
         self.show()
+
+    def add_pause(self):
+        print("test pause")
+        d, okPressed = QInputDialog.getDouble(self, "Enter wait time", "Enter wait time (s) [Enter 0 for Random]:", 0, 0, 360, 1)
+        if okPressed:
+            print(d)
+            self.wait = d
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('WAIT'))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem(str(d)))
+            self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
 
     def manual_send(self):
         self.r = self.sb_R.value()
@@ -154,28 +172,35 @@ class RobotGUI(QWidget):
     def run_program(self):
         print('Run clicked')
         for i in range(self.tableWidget.rowCount() - 1):
-            # print(self.tableWidget.item(i,1).text())
-            self.r = float(self.tableWidget.item(i, 1).text())
-            self.z = float(self.tableWidget.item(i, 2).text())
-            self.phi = float(self.tableWidget.item(i, 3).text())
-            self.theta = float(self.tableWidget.item(i, 4).text())
-            self.grip = float(self.tableWidget.item(i, 5).text())
-            if i > 0:
-                d = math.sqrt((self.r - r_old) ** 2 +
+            #print(self.tableWidget.item(i,0).text())
+            if self.tableWidget.item(i,0).text() == "GOTO":
+                self.r = float(self.tableWidget.item(i, 1).text())
+                self.z = float(self.tableWidget.item(i, 2).text())
+                self.phi = float(self.tableWidget.item(i, 3).text())
+                self.theta = float(self.tableWidget.item(i, 4).text())
+                self.grip = float(self.tableWidget.item(i, 5).text())
+                if i > 0:
+                    d = math.sqrt((self.r - r_old) ** 2 +
                               (self.z - z_old) ** 2 +
                               (self.theta - theta_old) ** 2 +
                               (self.phi - phi_old) ** 2 +
                               (self.grip - grip_old) ** 2)
-                v = 30.0
-                t = max(1.1 * d/v, 0.5)  # increases wait by 10% to allow robot to keep pace
-                print(t)
-                time.sleep(t)
-            self.send_serial()
-            r_old = self.r
-            z_old = self.z
-            theta_old = self.theta
-            phi_old = self.phi
-            grip_old = self.grip
+                    v = 30.0
+                    t = max(1.1 * d/v, 0.5)  # increases wait by 10% to allow robot to keep pace
+                    print(t)
+                    time.sleep(t)
+                self.send_serial()
+                r_old = self.r
+                z_old = self.z
+                theta_old = self.theta
+                phi_old = self.phi
+                grip_old = self.grip
+
+            if self.tableWidget.item(i,0).text() == "WAIT":
+                print("user has become the waiter")
+                if self.wait == 0:
+                    self.wait = random.random() + 0.25
+                time.sleep(self.wait)
 
             # print('R:' + str(self.r) + ' | ')
 
@@ -193,7 +218,6 @@ class RobotGUI(QWidget):
         # self.tableWidget.setItem(0, 1, QTableWidgetItem('new'))
         self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
 
-    # TODO: Add Run Program Feature
 
     # def write_us(self):
     #     self.lbl_ang.setText('Angle (µs) ') if self.chk.isChecked() else self.lbl_ang.setText('Angle (deg)')
