@@ -9,11 +9,20 @@ import win32api
 import math
 import time
 import random
+import ctypes
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 
-ser = serial.Serial('COM3', 9600)
+try:
+    ser = serial.Serial('COM3', 9600)
+except:
+    def Mbox(title, text, style):
+        return ctypes.windll.user32.MessageBoxW(0, text, title, style)
+    Mbox('Error!', 'Error: Unable to communicate with Arduino.\
+                    \nMake sure that it is plugged in and that no other programs are talking to it.\n\
+The program will now exit.', 0)
+    sys.exit()
 
 
 def deg2us(deg, m, b):
