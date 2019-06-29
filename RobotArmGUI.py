@@ -36,10 +36,12 @@ class RobotGUI(QWidget):
     def __init__(self):
         super(RobotGUI, self).__init__()
 
-        self.width = 545
-        self.height = 200
-        self.left = win32api.GetSystemMetrics(0) / 2 - self.width / 2
-        self.top = win32api.GetSystemMetrics(1) / 2 - self.height / 2
+        # window properties
+        # self.width = 545
+        # self.height = 200
+        # self.left = win32api.GetSystemMetrics(0) / 2 - self.width / 2
+        # self.top = win32api.GetSystemMetrics(1) / 2 - self.height / 2
+
 
         # self.chk = QCheckBox('Write µs')
 
@@ -99,7 +101,7 @@ class RobotGUI(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        self.setGeometry(self.left, self.top, self.width, self.height)
+        # self.setGeometry(self.left, self.top, self.width, self.height)
 
         self.create_table()
 
@@ -294,7 +296,60 @@ class RobotGUI(QWidget):
             self.tableWidget.setColumnWidth(i, 60)
 
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    rg = RobotGUI()
-    sys.exit(app.exec_())
+class main_window(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.form_widget = RobotGUI()
+        self.setCentralWidget(self.form_widget)
+
+        self.width = 545
+        self.height = 200
+        self.left = win32api.GetSystemMetrics(0) / 2 - self.width / 2
+        self.top = win32api.GetSystemMetrics(1) / 2 - self.height / 2
+        self.init_ui()
+        
+    
+    def init_ui(self):
+        self.setGeometry(self.left, self.top, self.width, self.height)
+        bar = self.menuBar()
+        file = bar.addMenu('File')
+
+        new_action = QAction('New', self)
+        save_action = QAction('Save', self)
+        load_action = QAction('Load', self)
+        quit_action = QAction('Quit', self)
+
+        file.addAction(new_action)
+        file.addAction(save_action)
+        file.addAction(load_action)
+        file.addAction(quit_action)
+
+        new_action.triggered.connect(self.new_trigger)
+        save_action.triggered.connect(self.save_trigger)
+        load_action.triggered.connect(self.load_trigger)
+        quit_action.triggered.connect(self.quit_trigger)
+        
+
+        self.show()
+
+    def new_trigger(self):
+        confirm_new = QMessageBox.question(self, 'Message', "Do you want to create new program?", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+
+    def save_trigger(self):
+        pass
+
+    def load_trigger(self):
+        pass
+
+    def quit_trigger(self):
+        qApp.quit()
+
+# if __name__ == '__main__':
+#     app = QApplication(sys.argv)
+#     rg = RobotGUI()
+#     sys.exit(app.exec_())
+
+app = QApplication(sys.argv)
+rg = main_window()
+sys.exit(app.exec_())
