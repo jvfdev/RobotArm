@@ -223,6 +223,7 @@ class RobotGUI(QWidget):
                               (self.grip - grip_old) ** 2)
                     v = 30.0
                     t = max(1.2 * d/v, 0.5)  # increases wait by 10% to allow robot to keep pace
+                    #TODO have robot send command when action is complete, wait for action
                     # print(t)
                     time.sleep(t)
                 self.send_serial()
@@ -264,6 +265,13 @@ class RobotGUI(QWidget):
         # print(self.sb_R.text())
         # self.tableWidget.setItem(0, 1, QTableWidgetItem('new'))
         self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+    
+    def clear_table(self):
+        # print('clear_table called')
+        confirm_new = QMessageBox.question(self, 'Message', "Do you want to create new program?\n This will clear the current program.", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+        if confirm_new == QMessageBox.Yes:
+            while(self.tableWidget.rowCount() > 1):
+                self.tableWidget.removeRow(0)
 
 
     # def write_us(self):
@@ -325,25 +333,40 @@ class main_window(QMainWindow):
         file.addAction(load_action)
         file.addAction(quit_action)
 
-        new_action.triggered.connect(self.new_trigger)
-        save_action.triggered.connect(self.save_trigger)
-        load_action.triggered.connect(self.load_trigger)
+        # new_action.triggered.connect(self.new_trigger)
+        # save_action.triggered.connect(self.save_trigger)
+        # load_action.triggered.connect(self.load_trigger)
         quit_action.triggered.connect(self.quit_trigger)
+        file.triggered.connect(self.respond)
         
 
         self.show()
 
-    def new_trigger(self):
-        confirm_new = QMessageBox.question(self, 'Message', "Do you want to create new program?", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+    def respond(self, q):
+        signal = q.text()
 
-    def save_trigger(self):
-        pass
+        if signal == 'New':
+            self.form_widget.clear_table()
+        elif signal == 'Save':
+            pass
+        elif signal == 'Load':
+            pass
 
-    def load_trigger(self):
-        pass
+    # def new_trigger(self):
+    #     confirm_new = QMessageBox.question(self, 'Message', "Do you want to create new program?", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+    #     if confirm_new == QMessageBox.Yes:
+
+
+    # def save_trigger(self):
+    #     pass
+
+    # def load_trigger(self):
+    #     pass
 
     def quit_trigger(self):
-        qApp.quit()
+        confirm_quit = QMessageBox.question(self, 'Message', "Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        if confirm_quit == QMessageBox.Yes:
+            qApp.quit()
 
 # if __name__ == '__main__':
 #     app = QApplication(sys.argv)
