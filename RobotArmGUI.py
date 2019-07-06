@@ -98,6 +98,10 @@ class RobotGUI(QWidget):
         self.wait = 0
         self.num_loops = 0
         self.loop_line = 0
+        self.default_directory = os.path.join(os.getenv('HOME'),'Documents','RobotArmProfiles')
+        print('makedir check')
+        if not os.path.exists(self.default_directory):
+            os.makedirs(self.default_directory)
 
 
         self.init_ui()
@@ -231,7 +235,7 @@ class RobotGUI(QWidget):
                               (self.phi - phi_old) ** 2 +
                               (self.grip - grip_old) ** 2)
                     v = 30.0
-                    t = max(1.2 * d/v, 0.5)  # increases wait by 10% to allow robot to keep pace
+                    t = max(1.2 * d/v, 0.5)  # increases wait by 20% to allow robot to keep pace
                     #TODO have robot send command when action is complete, wait for action
                     # print(t)
                     time.sleep(t)
@@ -277,30 +281,56 @@ class RobotGUI(QWidget):
     
     def clear_table(self):
         # print('clear_table called')
-        confirm_new = QMessageBox.question(self, 'Message', "Do you want to create new program?\n This will clear the current program.", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
+        confirm_new = QMessageBox.question(self, 'Confirm', "Do you want to clear the current program?", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
         if confirm_new == QMessageBox.Yes:
             while(self.tableWidget.rowCount() > 1):
                 self.tableWidget.removeRow(0)
+            return True
+        else:
+            return False
 
     def save_profile(self):
-        options = QFileDialog.Options()
-        print("save_profile clicked")
-        filename = QFileDialog.getSaveFileName(self, 'Save File', os.path.join(os.getenv('HOME'), 'Documents'), "JSON Files (*.JSON)", options=options)
-        # print(filename[0])
-        num_rows = self.tableWidget.rowCount()-1
-        profile = []
-        for row in range(num_rows):
-            row_values = []
-            for column in range(6):
-                row_values.append(self.tableWidget.item(row, column).text())
-                # a = self.tableWidget.item(row, column).text()
-                # print('test: ' + self.tableWidget.item(row, column).text())
-            profile.append(row_values)
-        print(profile)
-        profile_json = json.dumps(profile)
-        file_object = open(filename[0],"w")
-        file_object.write(profile_json)
-        file_object.close()
+        if self.tableWidget.rowCount() == 1:
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Warning)
+            msg.setText("No profile to save!")
+            msg.setWindowTitle("Warning")
+            msg.exec_()
+        else:   
+            options = QFileDialog.Options()
+            filename = QFileDialog.getSaveFileName(self, 'Save File', self.default_directory, "JSON Files (*.JSON)", options=options)
+            if not filename[0] == '':
+                num_rows = self.tableWidget.rowCount()-1
+                profile = []
+                for row in range(num_rows):
+                    row_values = []
+                    for column in range(6):
+                        row_values.append(self.tableWidget.item(row, column).text())
+                    profile.append(row_values)
+                profile_json = json.dumps(profile)
+                file_object = open(filename[0],"w")
+                file_object.write(profile_json)
+                file_object.close()
+
+    def load_profile(self):
+        print("Load profile clicked")
+        options = QFileDialog   .Options()
+        filename = QFileDialog.getOpenFileName(self, 'Load File', self.default_directory, "JSON Files (*.JSON)", options=options)
+        print(filename)
+        if not filename[0] == '':
+            if self.clear_table():
+                file_object = open(filename[0],"r")
+                profile_json = file_object.read()
+                file_object.close()
+                profile = json.loads(profile_json)
+                print(profile)
+                num_rows = len(profile)
+                for row in range(num_rows):
+                    for column in range(6):
+                        # self.tableWidget.item(row, column).text() = profile[row][column]
+                        self.tableWidget.setItem(row, column, QTableWidgetItem(profile[row][column]))
+                    self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
+
 
         
 
@@ -377,7 +407,7 @@ class main_window(QMainWindow):
         elif signal == 'Save':
             self.form_widget.save_profile()
         elif signal == 'Load':
-            pass
+            self.form_widget.load_profile()
 
     def quit_trigger(self):
         confirm_quit = QMessageBox.question(self, 'Message', "Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
