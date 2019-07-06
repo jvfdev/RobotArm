@@ -38,15 +38,6 @@ class RobotGUI(QWidget):
     def __init__(self):
         super(RobotGUI, self).__init__()
 
-        # window properties
-        # self.width = 545
-        # self.height = 200
-        # self.left = win32api.GetSystemMetrics(0) / 2 - self.width / 2
-        # self.top = win32api.GetSystemMetrics(1) / 2 - self.height / 2
-
-
-        # self.chk = QCheckBox('Write µs')
-
         self.lbl_jnt = QLabel('End Effector Position')
         self.lbl_jnt.setAlignment(Qt.AlignCenter)
         self.lbl_ang = QLabel('Angle (deg)')
@@ -99,7 +90,6 @@ class RobotGUI(QWidget):
         self.num_loops = 0
         self.loop_line = 0
         self.default_directory = os.path.join(os.getenv('HOME'),'Documents','RobotArmProfiles')
-        print('makedir check')
         if not os.path.exists(self.default_directory):
             os.makedirs(self.default_directory)
 
@@ -107,7 +97,6 @@ class RobotGUI(QWidget):
         self.init_ui()
 
     def init_ui(self):
-        # self.setGeometry(self.left, self.top, self.width, self.height)
 
         self.create_table()
 
@@ -160,7 +149,6 @@ class RobotGUI(QWidget):
         self.show()
 
     def add_loop(self):
-        #print("test add loop")
         loop2, ok_pressed_loop = QInputDialog.getInt(self, "Loop", "What line do you want to loop to?", 1, 1, self.tableWidget.rowCount() - 1, 1)
         if ok_pressed_loop:
             n_loops, ok_pressed_num_loops = QInputDialog.getInt(self, "Number of loops", "Enter the number of times you want to loop", 1, 1, 10000, 1)
@@ -176,10 +164,8 @@ class RobotGUI(QWidget):
                 self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
 
     def add_pause(self):
-        #print("test pause")
         d, ok_pressed_pause = QInputDialog.getDouble(self, "Enter wait time", "Enter wait time (s) [Enter 0 for Random]:", 0, 0, 360, 1)
         if ok_pressed_pause:
-            print(d)
             self.wait = d
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('WAIT'))
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem(str(d)))
@@ -198,30 +184,21 @@ class RobotGUI(QWidget):
         self.send_serial()
 
     def send_serial(self):
-        # print("Send Serial Clicked")
-        # cmd = str(round(self.sb_R.value())) + 'R,'
-        # + str(round(self.sb_Z.value())) + 'Z,' + str(round(self.sb_phi.value())) + 'P,'
-        # + str(round(self.sb_theta.value())) + 'T,' + str(round(self.sb_grip.value())) + 'G,;'
         cmd = str(round(self.r)) + 'R,' +\
               str(round(self.z)) + 'Z,' +\
               str(round(self.phi)) + 'P,' +\
               str(round(self.theta)) + 'T,' +\
               str(round(self.grip)) + 'G,;'
-        print(cmd)
         ser.write(cmd.encode('utf-8'))
 
     def run_program(self):
-        print('Run clicked')
-        #for i in range(self.tableWidget.rowCount() - 1):
         i = 0
+        for row in range(self.tableWidget.rowCount() - 1):
+            if self.tableWidget.item(row,0).text() == "LOOP":
+                self.num_loops = int(self.tableWidget.item(row,2).text())
+                self.loop_line = int(self.tableWidget.item(row,1).text())
         temp_loops = self.num_loops # restores this value after execution
         while i < self.tableWidget.rowCount() - 1:
-
-            #rand_dwell = random.random()
-            # print('test rand: ' + str(rand_dwell))
-            maxloop = self.tableWidget.rowCount() - 1
-            print('i: ' + str(i) + 'of' + str(maxloop))
-            #print(self.tableWidget.item(i,0).text())
             if self.tableWidget.item(i,0).text() == "GOTO":
                 self.r = float(self.tableWidget.item(i, 1).text())
                 self.z = float(self.tableWidget.item(i, 2).text())
@@ -237,7 +214,6 @@ class RobotGUI(QWidget):
                     v = 30.0
                     t = max(1.2 * d/v, 0.5)  # increases wait by 20% to allow robot to keep pace
                     #TODO have robot send command when action is complete, wait for action
-                    # print(t)
                     time.sleep(t)
                 self.send_serial()
                 r_old = self.r
@@ -247,40 +223,33 @@ class RobotGUI(QWidget):
                 grip_old = self.grip
 
             if self.tableWidget.item(i,0).text() == "WAIT":
-                print("user has become the waiter")
                 self.wait = float(self.tableWidget.item(i, 1).text())
                 if self.wait == 0:
                     random.seed()
                     self.wait = random.random() + 1.0
-                print('sleep: ' + str(self.wait))
                 time.sleep(self.wait)
 
             if self.tableWidget.item(i,0).text() == "LOOP":
-                print("loopin'")
                 if self.num_loops > 0:
                     self.num_loops = self.num_loops - 1
                     i = self.loop_line-2
 
             i = i+1
         self.num_loops = temp_loops
-            # print('R:' + str(self.r) + ' | ')
+
 
 
 
     def record_in_table(self):
-        # print(self.tableWidget.rowCount())
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('GOTO'))
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem(self.sb_R.text()))
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem(self.sb_Z.text()))
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QTableWidgetItem(self.sb_phi.text()))
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 4, QTableWidgetItem(self.sb_theta.text()))
         self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 5, QTableWidgetItem(self.sb_grip.text()))
-        # print(self.sb_R.text())
-        # self.tableWidget.setItem(0, 1, QTableWidgetItem('new'))
         self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
     
     def clear_table(self):
-        # print('clear_table called')
         confirm_new = QMessageBox.question(self, 'Confirm', "Do you want to clear the current program?", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
         if confirm_new == QMessageBox.Yes:
             while(self.tableWidget.rowCount() > 1):
@@ -313,46 +282,20 @@ class RobotGUI(QWidget):
                 file_object.close()
 
     def load_profile(self):
-        print("Load profile clicked")
         options = QFileDialog   .Options()
         filename = QFileDialog.getOpenFileName(self, 'Load File', self.default_directory, "JSON Files (*.JSON)", options=options)
-        print(filename)
         if not filename[0] == '':
             if self.clear_table():
                 file_object = open(filename[0],"r")
                 profile_json = file_object.read()
                 file_object.close()
                 profile = json.loads(profile_json)
-                print(profile)
                 num_rows = len(profile)
                 for row in range(num_rows):
                     for column in range(6):
                         # self.tableWidget.item(row, column).text() = profile[row][column]
                         self.tableWidget.setItem(row, column, QTableWidgetItem(profile[row][column]))
                     self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
-
-
-        
-
-    # def write_us(self):
-    #     self.lbl_ang.setText('Angle (µs) ') if self.chk.isChecked() else self.lbl_ang.setText('Angle (deg)')
-    #     self.sb_R.setRange(500, 2500) if self.chk.isChecked() else self.sb_R.setRange(5, 175)
-    #     self.sb_Z.setRange(500, 2500) if self.chk.isChecked() else self.sb_Z.setRange(0, 180)
-    #     self.sb_phi.setRange(500, 2500) if self.chk.isChecked() else self.sb_phi.setRange(25, 180)
-    #     self.sb_theta.setRange(500, 2500) if self.chk.isChecked() else self.sb_theta.setRange(80, 250)
-    #     self.sb_grip.setRange(500, 2500) if self.chk.isChecked() else self.sb_grip.setRange(0, 250)
-    #
-    #     self.sb_R.setValue(1475) if self.chk.isChecked() else self.sb_R.setValue(90)
-    #     self.sb_Z.setValue(1742) if self.chk.isChecked() else self.sb_Z.setValue(60)
-    #     self.sb_phi.setValue(2049) if self.chk.isChecked() else self.sb_phi.setValue(25)
-    #     self.sb_theta.setValue(981) if self.chk.isChecked() else self.sb_theta.setValue(110)
-    #     self.sb_grip.setValue(1100) if self.chk.isChecked() else self.sb_grip.setValue(10)
-
-    # def center(self):
-    #     qr = self.frameGeometry()
-    #     cp = QDesktopWidget().availableGeometry().center()
-    #     qr.moveCenter(cp)
-    #     self.move(qr.topLeft())
 
     def create_table(self):
         self.tableWidget = QTableWidget()
@@ -362,7 +305,6 @@ class RobotGUI(QWidget):
         # self.tableWidget.setColumnWidth([0,1], [10, 10])
         for i in range(self.tableWidget.columnCount()):
             self.tableWidget.setColumnWidth(i, 60)
-
 
 class main_window(QMainWindow):
     def __init__(self):
@@ -413,8 +355,6 @@ class main_window(QMainWindow):
         confirm_quit = QMessageBox.question(self, 'Message', "Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if confirm_quit == QMessageBox.Yes:
             qApp.quit()
-
-
 
 app = QApplication(sys.argv)
 rg = main_window()
