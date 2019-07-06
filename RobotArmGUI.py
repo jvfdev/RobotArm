@@ -10,6 +10,8 @@ import math
 import time
 import random
 import ctypes
+import os
+import json
 
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
@@ -164,6 +166,9 @@ class RobotGUI(QWidget):
                 self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('LOOP'))
                 self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem(str(loop2)))
                 self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem(str(n_loops)))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QTableWidgetItem(""))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 4, QTableWidgetItem(""))
+                self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 5, QTableWidgetItem(""))
                 self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
 
     def add_pause(self):
@@ -174,6 +179,10 @@ class RobotGUI(QWidget):
             self.wait = d
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 0, QTableWidgetItem('WAIT'))
             self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 1, QTableWidgetItem(str(d)))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 2, QTableWidgetItem(""))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 3, QTableWidgetItem(""))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 4, QTableWidgetItem(""))
+            self.tableWidget.setItem(self.tableWidget.rowCount() - 1, 5, QTableWidgetItem(""))
             self.tableWidget.setRowCount(self.tableWidget.rowCount() + 1)
 
     def manual_send(self):
@@ -273,6 +282,27 @@ class RobotGUI(QWidget):
             while(self.tableWidget.rowCount() > 1):
                 self.tableWidget.removeRow(0)
 
+    def save_profile(self):
+        options = QFileDialog.Options()
+        print("save_profile clicked")
+        filename = QFileDialog.getSaveFileName(self, 'Save File', os.path.join(os.getenv('HOME'), 'Documents'), "JSON Files (*.JSON)", options=options)
+        # print(filename[0])
+        num_rows = self.tableWidget.rowCount()-1
+        profile = []
+        for row in range(num_rows):
+            row_values = []
+            for column in range(6):
+                row_values.append(self.tableWidget.item(row, column).text())
+                # a = self.tableWidget.item(row, column).text()
+                # print('test: ' + self.tableWidget.item(row, column).text())
+            profile.append(row_values)
+        print(profile)
+        profile_json = json.dumps(profile)
+        file_object = open(filename[0],"w")
+        file_object.write(profile_json)
+        file_object.close()
+
+        
 
     # def write_us(self):
     #     self.lbl_ang.setText('Angle (µs) ') if self.chk.isChecked() else self.lbl_ang.setText('Angle (deg)')
@@ -333,9 +363,6 @@ class main_window(QMainWindow):
         file.addAction(load_action)
         file.addAction(quit_action)
 
-        # new_action.triggered.connect(self.new_trigger)
-        # save_action.triggered.connect(self.save_trigger)
-        # load_action.triggered.connect(self.load_trigger)
         quit_action.triggered.connect(self.quit_trigger)
         file.triggered.connect(self.respond)
         
@@ -348,30 +375,16 @@ class main_window(QMainWindow):
         if signal == 'New':
             self.form_widget.clear_table()
         elif signal == 'Save':
-            pass
+            self.form_widget.save_profile()
         elif signal == 'Load':
             pass
-
-    # def new_trigger(self):
-    #     confirm_new = QMessageBox.question(self, 'Message', "Do you want to create new program?", QMessageBox.Yes | QMessageBox.Cancel, QMessageBox.Cancel)
-    #     if confirm_new == QMessageBox.Yes:
-
-
-    # def save_trigger(self):
-    #     pass
-
-    # def load_trigger(self):
-    #     pass
 
     def quit_trigger(self):
         confirm_quit = QMessageBox.question(self, 'Message', "Are you sure you want to quit?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if confirm_quit == QMessageBox.Yes:
             qApp.quit()
 
-# if __name__ == '__main__':
-#     app = QApplication(sys.argv)
-#     rg = RobotGUI()
-#     sys.exit(app.exec_())
+
 
 app = QApplication(sys.argv)
 rg = main_window()
