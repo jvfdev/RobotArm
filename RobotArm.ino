@@ -27,6 +27,7 @@ void setup() {
   J3.attach(10);
   J4.attach(9);
   Serial.begin(9600);
+  delay(2000);
   Serial.println("Connection Established");
   moveArm(X_new, X_old);
 }
@@ -114,6 +115,7 @@ void moveArm(float x_new[5], float x_old[5]) {
       J4.writeMicroseconds(us4);
     }
   }
+  Serial.println("K");
 }
 
 float deg2rad(float x) {

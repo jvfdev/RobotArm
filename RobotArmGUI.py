@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import *
 
 try:
     ser = serial.Serial('COM3', 9600)
+    test = ser.readline()
+    print(test)
 except:
     def Mbox(title, text, style):
         return ctypes.windll.user32.MessageBoxW(0, text, title, style)
@@ -190,8 +192,10 @@ class RobotGUI(QWidget):
               str(round(self.theta)) + 'T,' +\
               str(round(self.grip)) + 'G,;'
         ser.write(cmd.encode('utf-8'))
+        # print(cmd)
 
     def run_program(self):
+        ser.reset_input_buffer()
         i = 0
         for row in range(self.tableWidget.rowCount() - 1):
             if self.tableWidget.item(row,0).text() == "LOOP":
@@ -205,17 +209,9 @@ class RobotGUI(QWidget):
                 self.phi = float(self.tableWidget.item(i, 3).text())
                 self.theta = float(self.tableWidget.item(i, 4).text())
                 self.grip = float(self.tableWidget.item(i, 5).text())
-                if i > 0:
-                    d = math.sqrt((self.r - r_old) ** 2 +
-                              (self.z - z_old) ** 2 +
-                              (self.theta - theta_old) ** 2 +
-                              (self.phi - phi_old) ** 2 +
-                              (self.grip - grip_old) ** 2)
-                    v = 30.0
-                    t = max(1.2 * d/v, 0.5)  # increases wait by 20% to allow robot to keep pace
-                    #TODO have robot send command when action is complete, wait for action
-                    time.sleep(t)
                 self.send_serial()
+                data_in = ser.readline() # waits for robot to finish executing command before continuing
+
                 r_old = self.r
                 z_old = self.z
                 theta_old = self.theta
